@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 
-function useVirtual(listRef, list) {
+function useVirtual(listRef, list, isFullScreen) {
     // 存储原始数据
     const origin = list
     // 视图高度
@@ -41,19 +41,17 @@ function useVirtual(listRef, list) {
     }
 
     function initData(dom) {
-        const target = document.documentElement.offsetHeight < dom.offsetHeight ? document.documentElement : dom
-        viewHeight = target.offsetHeight
+        // 全屏情况下目标对象是document,非全屏的情况下目标对象是当前dom元素对象
+        const target = isFullScreen ? document.documentElement : dom
+        viewHeight = isFullScreen ? target.offsetHeight : target.parentNode.offsetHeight
         itemHeight = target.getElementsByClassName('virtual-item')[0].offsetHeight
         dur = ~~(viewHeight / itemHeight)
     }
 
     function eventBind(dom) {
-        /*
-         * 滚动事件源对象的判断，当虚拟列表的高度是大于视图页面高度，监听对象为window即可
-         * 在单一区域的虚拟列表滚动监听对象测为dom元素本身 
-        */ 
-        const eventTarget = document.documentElement.offsetHeight < dom.offsetHeight ? window : dom
-        eventTarget.addEventListener('scroll', e => handleScroll(e))
+        // 全屏情况下滚动事件的目标对象是document,非全屏的情况下滚动事件绑定的目标对象是当前dom元素对象的父节点
+        const eventTarget = isFullScreen ? window : dom.parentNode
+        eventTarget.addEventListener('scroll', e => handleScroll(e), false)
     }
 
     function render(startIndex, endIndex) {
@@ -61,8 +59,11 @@ function useVirtual(listRef, list) {
         setEndIndex(() => startIndex + dur + 1)
     }
 
-    function handleScroll() {
-        setStartIndex(() => (~~(document.documentElement.scrollTop / itemHeight)))
+    function handleScroll(e) {
+        e.stopPropagation()
+        // 全屏情况下滚动事件的目标对象是document,非全屏的情况下滚动事件绑定的目标对象是当前dom元素对象的父节点
+        const target = isFullScreen ? document.documentElement : listRef.current.parentNode
+        setStartIndex(() => (~~(target.scrollTop / itemHeight)))
     }
 
     function update() {

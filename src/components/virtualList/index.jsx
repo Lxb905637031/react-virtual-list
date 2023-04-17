@@ -3,13 +3,15 @@ import { useVirtual } from './hooks/index'
 
 import VirtualItem from './components/virtualItem'
 
-export default function VirtualList() {
+export default function VirtualList({
+    isFullScreen = true
+}) {
     const listRef = useRef()
 
     const [ 
         viewList,
         padding
-    ] = useVirtual(listRef, new Array(100).fill(0).map((item, index) => item + index + 1))
+    ] = useVirtual(listRef, new Array(100).fill(0).map((item, index) => item + index + 1), isFullScreen)
 
     return (
         <div
